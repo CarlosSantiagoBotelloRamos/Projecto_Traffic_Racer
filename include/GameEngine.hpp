@@ -2,6 +2,7 @@
 #define GAME_ENGINE_HPP
 
 #include <SFML/Graphics.hpp>
+#include <SFML/Audio.hpp>
 #include <memory>
 #include <stack>
 
@@ -11,6 +12,7 @@ class GameEngine
 {
 private:
     sf::RenderWindow window;
+    sf::View baseView; // Vista con tamaño virtual fijo (800x600)
     std::stack<std::shared_ptr<State>> states;
     sf::Clock clock;
     bool running;
@@ -18,6 +20,8 @@ private:
     // Selecciones del jugador
     int selectedVehicle;
     int selectedMap;
+    // Música global de fondo
+    sf::Music bgMusic;
     
 public:
     GameEngine();
@@ -32,6 +36,7 @@ public:
     void popState();
     
     sf::RenderWindow& getWindow();
+    sf::View& getBaseView();
     
     void setSelectedVehicle(int vehicle);
     void setSelectedMap(int map);
@@ -39,6 +44,9 @@ public:
     int getSelectedMap() const;
     
     void quit();
+
+private:
+    void updateLetterboxView(unsigned int winWidth, unsigned int winHeight);
 };
 
 #endif

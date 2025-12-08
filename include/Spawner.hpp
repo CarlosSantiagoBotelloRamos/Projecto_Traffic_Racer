@@ -17,6 +17,10 @@ private:
     float spawnTimer;
     float spawnInterval;
     float difficulty;
+    float elapsedSeconds;
+    float growthPerMinute; // incremento suave por minuto
+    float spawnTightenPerMinute; // reduce el intervalo de spawn por minuto
+    float speedGrowthPerSecond; // incremento lineal de velocidad (px/s) por segundo de juego
     int map;
 public:
     Spawner(int selectedMap = 0);

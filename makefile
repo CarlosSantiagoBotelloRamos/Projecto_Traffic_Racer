@@ -71,7 +71,8 @@ clean:
 # Ejecutar el programa
 run: $(EXECUTABLE)
 	@echo "[INFO] Running Traffic Racer..."
-	@$(EXECUTABLE)
+	@-$(EXECUTABLE)
+	@echo "[INFO] Program exited"
 
 # Recompilar todo
 rebuild: clean all

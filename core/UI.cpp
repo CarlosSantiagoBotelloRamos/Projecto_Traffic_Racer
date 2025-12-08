@@ -24,7 +24,8 @@ void UI::drawText(sf::RenderWindow& window, const std::string& text,
 
 void UI::drawButton(sf::RenderWindow& window, const std::string& text, 
                     float x, float y, float width, float height, 
-                    const sf::Color& bgColor)
+                    const sf::Color& bgColor,
+                    const sf::Color& textColor)
 {
     sf::RectangleShape button(sf::Vector2f(width, height));
     button.setFillColor(bgColor);
@@ -32,20 +33,20 @@ void UI::drawButton(sf::RenderWindow& window, const std::string& text,
     window.draw(button);
     
     sf::Text buttonText(text, font, 20);
-    buttonText.setFillColor(sf::Color::White);
+    buttonText.setFillColor(textColor);
     float textX = x + (width - buttonText.getLocalBounds().width) / 2;
     float textY = y + (height - buttonText.getLocalBounds().height) / 2;
     buttonText.setPosition(textX, textY);
     window.draw(buttonText);
 }
 
-void UI::drawHUD(sf::RenderWindow& window, int score, float distance, 
-                 float velocity, int nearMisses)
+void UI::drawHUD(sf::RenderWindow& window, int score, float distance,
+                 float speedKmh)
 {
-    drawText(window, "Score: " + std::to_string(score), 10, 10, 20);
-    drawText(window, "Distance: " + std::to_string(static_cast<int>(distance)) + "m", 10, 35, 20);
-    drawText(window, "Speed: " + std::to_string(static_cast<int>(velocity)), 10, 60, 20);
-    drawText(window, "Near Misses: " + std::to_string(nearMisses), 10, 85, 20);
+    const sf::Color hudColor = sf::Color::Black;
+    drawText(window, "Score: " + std::to_string(score), 10, 10, 20, hudColor);
+    drawText(window, "Distance: " + std::to_string(static_cast<int>(distance)) + " m", 10, 35, 20, hudColor);
+    drawText(window, "Speed: " + std::to_string(static_cast<int>(speedKmh)) + " km/h", 10, 60, 20, hudColor);
 }
 
 const sf::Font& UI::getFont() const

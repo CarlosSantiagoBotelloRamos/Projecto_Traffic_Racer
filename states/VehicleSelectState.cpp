@@ -1,17 +1,25 @@
 #include "VehicleSelectState.hpp"
 #include "GameEngine.hpp"
+#include "Config.hpp"
 #include "MenuState.hpp"
 
-// Helper: get car image list
+// Helper: get car image list (case-insensitive .png)
 #include <filesystem>
 #include <vector>
+#include <cctype>
 std::vector<std::string> getCarImageListVS() {
     std::vector<std::string> images;
     std::string dir = "assets/cars/";
-    for (const auto& entry : std::filesystem::directory_iterator(dir)) {
-        if (entry.path().extension() == ".png") {
-            images.push_back(entry.path().string());
+    try {
+        for (const auto& entry : std::filesystem::directory_iterator(dir)) {
+            auto ext = entry.path().extension().string();
+            for (auto& c : ext) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+            if (ext == ".png") {
+                images.push_back(entry.path().string());
+            }
         }
+    } catch (...) {
+        // If directory can't be read, return empty list
     }
     return images;
 }
@@ -22,6 +30,34 @@ VehicleSelectState::VehicleSelectState(GameEngine* engine)
       scrollOffset(0.0f)
 {
     ui.loadFont("assets/fonts/arial.ttf");
+    // Cargar fondo específico del menú Select Vehicle
+    std::string bgPath = "assets/images/fondo select car.png";
+    if (bgTexture.loadFromFile(bgPath)) {
+        bgTexture.setSmooth(true);
+        bgSprite.setTexture(bgTexture);
+        auto win = engine->getWindow().getSize();
+        float scaleX = static_cast<float>(win.x) / bgTexture.getSize().x;
+        float scaleY = static_cast<float>(win.y) / bgTexture.getSize().y;
+        bgSprite.setScale(scaleX, scaleY);
+        bgSprite.setPosition(0.f, 0.f);
+    }
+
+    // Cargar audio 'rev' (case-insensitive, prefijo 'rev')
+    try {
+        for (const auto& entry : std::filesystem::directory_iterator("assets/audio/")) {
+            auto name = entry.path().filename().string();
+            std::string lower = name;
+            for (auto& ch : lower) ch = static_cast<char>(std::tolower(static_cast<unsigned char>(ch)));
+            if (lower.rfind("rev", 0) == 0) {
+                if (revBuffer.loadFromFile(entry.path().string())) {
+                    revSound.setBuffer(revBuffer);
+                    revSound.setLoop(false);
+                    revSound.setVolume(VOLUME_SFX);
+                }
+                break;
+            }
+        }
+    } catch (...) {}
 }
 
 void VehicleSelectState::handleInput(const sf::Event& event)
@@ -41,6 +77,9 @@ void VehicleSelectState::handleInput(const sf::Event& event)
         }
         else if (event.key.code == sf::Keyboard::Return)
         {
+            if (revBuffer.getSampleCount() > 0) {
+                revSound.play();
+            }
             engine->setSelectedVehicle(selectedVehicle);
             engine->popState();
         }
@@ -60,7 +99,15 @@ void VehicleSelectState::update(float deltaTime)
 void VehicleSelectState::render(sf::RenderWindow& window)
 {
     window.clear(sf::Color::Black);
-    ui.drawText(window, "SELECT VEHICLE", 280, 50, 40, sf::Color::Green);
+    // Draw background once, scaled to window size
+    if (bgTexture.getSize().x > 0 && bgTexture.getSize().y > 0) {
+        auto win = window.getSize();
+        float sX = static_cast<float>(win.x) / bgTexture.getSize().x;
+        float sY = static_cast<float>(win.y) / bgTexture.getSize().y;
+        bgSprite.setScale(sX, sY);
+        bgSprite.setPosition(0.f, 0.f);
+        window.draw(bgSprite);
+    }
     auto carImages = getCarImageListVS();
     int total = static_cast<int>(carImages.size());
     if (total == 0) {
@@ -95,10 +142,40 @@ void VehicleSelectState::render(sf::RenderWindow& window)
                 spr.setScale(scaleX, scaleY);
                 spr.setPosition(x, y);
                 window.draw(spr);
-                ui.drawText(window, std::filesystem::path(carImages[i]).stem().string(), x, y + (i == selectedVehicle ? bigScaleY + 10 : smallScaleY + 10), (i == selectedVehicle ? 28 : 18), (i == selectedVehicle) ? sf::Color::Yellow : sf::Color::White);
+                // Draw centered black label below the sprite
+                const std::string name = std::filesystem::path(carImages[i]).stem().string();
+                unsigned int fontSize = (i == selectedVehicle ? 28 : 18);
+                sf::Text label(name, ui.getFont(), fontSize);
+                label.setFillColor(sf::Color::Black);
+                auto lb = label.getLocalBounds();
+                float spriteW = tex.getSize().x * scaleX;
+                float spriteH = tex.getSize().y * scaleY;
+                float labelX = x + (spriteW - lb.width) * 0.5f - lb.left;
+                float labelY = y + spriteH + 10.f - lb.top;
+                label.setPosition(labelX, labelY);
+                window.draw(label);
             }
         }
     }
-    ui.drawText(window, "Use LEFT/RIGHT arrows to select, ENTER to confirm", 110, 450, 16, sf::Color::Cyan);
-    ui.drawText(window, "Press ESC to go back", 250, 500, 16, sf::Color::Cyan);
+    // Instrucciones centradas abajo en color negro
+    const auto viewSize = window.getView().getSize();
+    float vw = viewSize.x; float vh = viewSize.y;
+    {
+        sf::Text instr1("Use LEFT/RIGHT arrows to select, ENTER to confirm", ui.getFont(), 16);
+        instr1.setFillColor(sf::Color::Black);
+        auto b = instr1.getLocalBounds();
+        float x = (vw - b.width) * 0.5f - b.left;
+        float y = vh - 60.f - b.top;
+        instr1.setPosition(x, y);
+        window.draw(instr1);
+    }
+    {
+        sf::Text instr2("Press ESC to go back", ui.getFont(), 16);
+        instr2.setFillColor(sf::Color::Black);
+        auto b = instr2.getLocalBounds();
+        float x = (vw - b.width) * 0.5f - b.left;
+        float y = vh - 30.f - b.top;
+        instr2.setPosition(x, y);
+        window.draw(instr2);
+    }
 }

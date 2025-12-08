@@ -13,6 +13,16 @@ constexpr int WINDOW_FPS = 60;
 constexpr const char* WINDOW_TITLE = "Traffic Racer";
 
 // ============================================
+// MOVIMIENTO Y VELOCIDAD (km/h)
+// ============================================
+constexpr float BASE_SPEED_KMH = 10.0f;          // Velocidad base sin acelerar
+constexpr float ACCEL_RATE_KMH = 3.0f;           // Aumento por segundo al acelerar (reducción al doble de lentitud)
+constexpr float DECEL_RATE_KMH = 5.0f;           // Reducción por segundo al soltar (aún más progresivo)
+constexpr float PIXELS_PER_KMH = 12.0f;          // Conversión: km/h -> píxeles/segundo
+constexpr float BRAKE_RATE_KMH = 12.0f;          // Reducción por segundo al oprimir flecha abajo (freno)
+constexpr float DOWNSHIFT_MIN_KMH = 50.0f;       // Umbral mínimo para sonar downshift al frenar
+
+// ============================================
 // CONFIGURACIÓN DEL JUGADOR
 // ============================================
 constexpr float PLAYER_WIDTH = 40.0f;
@@ -38,7 +48,7 @@ constexpr float LANE_WIDTH = WINDOW_WIDTH / NUM_LANES;
 // CONFIGURACIÓN DE SPAWNER
 // ============================================
 constexpr float BASE_SPAWN_INTERVAL = 2.0f;
-constexpr float MIN_SPAWN_INTERVAL = 0.5f;
+constexpr float MIN_SPAWN_INTERVAL = 0.3f; // permitir mayor densidad mínima
 constexpr float DIFFICULTY_INCREASE_TIME = 30.0f; // Aumentar cada 30 segundos
 constexpr float DIFFICULTY_MULTIPLIER = 0.1f;
 
@@ -81,6 +91,10 @@ constexpr const char* MENU_MUSIC = "assets/music/menu.ogg";
 constexpr const char* GAME_MUSIC = "assets/music/game.ogg";
 constexpr const char* COLLISION_SOUND = "assets/audio/collision.ogg";
 constexpr const char* NEAR_MISS_SOUND = "assets/audio/near_miss.ogg";
+// Volúmenes de audio
+constexpr float VOLUME_GLOBAL = 100.0f;         // Volumen global del listener (0-100)
+constexpr float VOLUME_SFX = 100.0f;            // Volumen por defecto de efectos
+constexpr float VOLUME_MUSIC = 100.0f;          // Volumen por defecto de música
 
 // ============================================
 // DIFICULTADES (para futuras extensiones)

@@ -1,4 +1,8 @@
 #include "Score.hpp"
+#include <fstream>
+#include <algorithm>
+
+static const char* HIGHSCORE_FILE = "highscore.dat";
 
 Score::Score()
     : points(0),
@@ -6,22 +10,34 @@ Score::Score()
       nearMisses(0),
       maxVelocity(0.0f),
       collisions(0),
-      timeAlive(0.0f)
+      timeAlive(0.0f),
+      highScore(0),
+      pointsAccumulator(0.0f)
 {
+    highScore = readHighScoreFromFile();
 }
 
-void Score::update(float deltaTime, float playerVelocity)
+void Score::update(float deltaTime, float scrollPxPerSec, float playerKmh)
 {
     timeAlive += deltaTime;
-    
-    // Añadir puntos por tiempo vivo (1 punto cada segundo)
-    addPoints(static_cast<int>(deltaTime));
-    
-    // Añadir puntos por velocidad
-    addPoints(static_cast<int>(playerVelocity / 100.0f));
-    
-    // Actualizar distancia
-    distanceTraveled += (playerVelocity * deltaTime) / 100.0f;
+
+    // Puntos solo cuando se circula a más de 50 km/h
+    if (playerKmh > 50.0f) {
+        pointsAccumulator += deltaTime;
+        while (pointsAccumulator >= 1.0f) {
+            addPoints(1);
+            pointsAccumulator -= 1.0f;
+        }
+    }
+
+    // Actualizar distancia con el scroll del fondo (px -> metros aprox.)
+    distanceTraveled += (scrollPxPerSec * deltaTime) / 100.0f;
+
+    // Actualizar récord
+    if (points > highScore) {
+        highScore = points;
+        writeHighScoreToFile(highScore);
+    }
 }
 
 void Score::addPoints(int pts)
@@ -84,6 +100,17 @@ float Score::getTimeAlive() const
     return timeAlive;
 }
 
+int Score::getHighScore() const
+{
+    return highScore;
+}
+
+void Score::resetHighScore()
+{
+    highScore = 0;
+    writeHighScoreToFile(highScore);
+}
+
 void Score::reset()
 {
     points = 0;
@@ -92,4 +119,22 @@ void Score::reset()
     maxVelocity = 0.0f;
     collisions = 0;
     timeAlive = 0.0f;
+    pointsAccumulator = 0.0f;
+}
+
+int Score::readHighScoreFromFile()
+{
+    std::ifstream in(HIGHSCORE_FILE, std::ios::in | std::ios::binary);
+    if (!in) return 0;
+    int v = 0;
+    in.read(reinterpret_cast<char*>(&v), sizeof(v));
+    if (!in) return 0;
+    return std::max(0, v);
+}
+
+void Score::writeHighScoreToFile(int value)
+{
+    std::ofstream out(HIGHSCORE_FILE, std::ios::out | std::ios::binary | std::ios::trunc);
+    if (!out) return;
+    out.write(reinterpret_cast<const char*>(&value), sizeof(value));
 }

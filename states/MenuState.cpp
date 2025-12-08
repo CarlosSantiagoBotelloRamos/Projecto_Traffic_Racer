@@ -3,7 +3,9 @@
 #include "GameState.hpp"
 #include "VehicleSelectState.hpp"
 #include "MapSelectState.hpp"
+#include "Score.hpp"
 #include <iostream>
+#include <filesystem>
 
 MenuState::MenuState(GameEngine* engine)
         : State(engine),
@@ -14,6 +16,32 @@ MenuState::MenuState(GameEngine* engine)
         std::cerr << "Asegúrate de que el archivo existe y es una fuente TTF válida.\n";
         std::cerr << "Puedes copiar una fuente desde C:/Windows/Fonts/.\n" << std::endl;
         if (engine) engine->quit();
+    }
+
+    // Cargar fondo del menú: buscar "fondo" (case-insensitive) en assets/images/
+    std::string bgPath;
+    try {
+        for (const auto& entry : std::filesystem::directory_iterator("assets/images/")) {
+            const auto name = entry.path().filename().string();
+            std::string lower = name; for (auto& ch : lower) ch = static_cast<char>(std::tolower(static_cast<unsigned char>(ch)));
+            if (lower == std::string("fondo.png")) { bgPath = entry.path().string(); break; }
+        }
+    } catch (...) {}
+    if (bgPath.empty()) {
+        const char* candidates[] = { "assets/images/fondo.png", "assets/images/Fondo.png" };
+        for (auto cand : candidates) { if (std::filesystem::exists(cand)) { bgPath = cand; break; } }
+    }
+    if (!bgPath.empty() && bgTexture.loadFromFile(bgPath)) {
+        bgTexture.setSmooth(true);
+        bgSprite.setTexture(bgTexture);
+        auto win = engine->getWindow().getSize();
+        float scaleX = static_cast<float>(win.x) / bgTexture.getSize().x;
+        float scaleY = static_cast<float>(win.y) / bgTexture.getSize().y;
+        bgSprite.setScale(scaleX, scaleY);
+        bgSprite.setPosition(0.f, 0.f);
+        std::cout << "[INFO] Fondo de menú cargado: " << bgPath << "\n";
+    } else {
+        std::cerr << "[WARNING] No se pudo cargar el fondo de menú (fondo.png). Verifica assets/images/.\n";
     }
 }
 
@@ -70,21 +98,78 @@ void MenuState::update(float deltaTime)
 void MenuState::render(sf::RenderWindow& window)
 {
     window.clear(sf::Color::Black);
+    // Dibujar fondo si está cargado
+    if (bgTexture.getSize().x > 0 && bgTexture.getSize().y > 0) {
+        // Reajustar escala si la ventana cambió de tamaño
+        auto win = window.getSize();
+        float scaleX = static_cast<float>(win.x) / bgTexture.getSize().x;
+        float scaleY = static_cast<float>(win.y) / bgTexture.getSize().y;
+        bgSprite.setScale(scaleX, scaleY);
+        window.draw(bgSprite);
+    }
     
-    ui.drawText(window, "TRAFFIC RACER", 300, 50, 48, sf::Color::Green);
+    // Se elimina el título "TRAFFIC RACER" del menú principal
     
     // Menú
-    sf::Color startColor = (selectedOption == START_GAME) ? sf::Color::Yellow : sf::Color::White;
-    ui.drawText(window, "Start Game", 350, 150, 28, startColor);
+    // Botones verdes (verde limón) con texto blanco, el seleccionado se amplia 1px
+    struct Item { const char* label; int id; float y; };
+    Item items[] = {
+        { "Start Game", START_GAME, 140.f },
+        { "Select Vehicle", VEHICLE_SELECT, 195.f },
+        { "Select Map", MAP_SELECT, 250.f },
+        { "Quit", QUIT, 305.f }
+    };
+    // Usar tamaño de la vista (coordenadas virtuales) para posicionar
+    const auto viewSize = window.getView().getSize();
+    const float vw = viewSize.x;
+    const float vh = viewSize.y;
+    const float baseW = 150.f; // mitad de ancho (más delgado horizontalmente)
+    const float baseH = 44.f;
+    const sf::Color lime(67, 176, 42); // Pantone Lime Green (approx PANTONE 368 C #43B02A)
+    const float margin = 20.f;
+    const float gap = 24.f;          // mayor separación entre botones
+    const float marginSide = margin * 3.0f;      // triple separación lateral
+    const float marginBottom = margin * 2.5f;    // 2.5x separación inferior
+    const float lift = 0.f;          // bajar el conjunto (alinear con Quit izq.)
+    for (size_t idx = 0; idx < sizeof(items)/sizeof(items[0]); ++idx) {
+        const auto& it = items[idx];
+        bool sel = (selectedOption == it.id);
+        float w = baseW + (sel ? 2.f : 0.f);
+        float h = baseH + (sel ? 2.f : 0.f);
+        float x = 0.f;
+        float y = 0.f;
+        if (it.id == QUIT) {
+            // Quit en esquina inferior izquierda con márgenes ampliados
+            x = marginSide;
+            y = vh - marginBottom - h;
+        } else {
+            // Los otros tres en esquina inferior derecha, apilados hacia arriba
+            int orderIndex = 0; // 0=Start, 1=Select Vehicle, 2=Select Map
+            if (it.id == START_GAME) orderIndex = 0;
+            else if (it.id == VEHICLE_SELECT) orderIndex = 1;
+            else if (it.id == MAP_SELECT) orderIndex = 2;
+            float stackTopY = vh - marginBottom - (3.f * baseH + 2.f * gap) - lift;
+            y = stackTopY + orderIndex * (baseH + gap) - (sel ? 1.f : 0.f);
+            x = vw - marginSide - w;
+        }
+        sf::Color textColor = sel ? sf::Color::Black : sf::Color::White;
+        ui.drawButton(window, it.label, x, y, w, h, lime, textColor);
+    }
     
-    sf::Color vehicleColor = (selectedOption == VEHICLE_SELECT) ? sf::Color::Yellow : sf::Color::White;
-    ui.drawText(window, "Select Vehicle", 320, 200, 28, vehicleColor);
-    
-    sf::Color mapColor = (selectedOption == MAP_SELECT) ? sf::Color::Yellow : sf::Color::White;
-    ui.drawText(window, "Select Map", 340, 250, 28, mapColor);
-    
-    sf::Color quitColor = (selectedOption == QUIT) ? sf::Color::Yellow : sf::Color::White;
-    ui.drawText(window, "Quit", 370, 300, 28, quitColor);
-    
-    ui.drawText(window, "Use UP/DOWN arrows to navigate, ENTER to select", 130, 450, 16, sf::Color::Cyan);
+    {
+        // Posicionar las instrucciones centradas horizontalmente y
+        // a la mitad de la separación inferior respecto al botón Quit
+        sf::Text instr("Use UP/DOWN arrows to navigate, ENTER to select", ui.getFont(), 16);
+        instr.setFillColor(sf::Color::Black);
+        auto b = instr.getLocalBounds();
+        float ix = (vw - b.width) * 0.5f - b.left;
+        // Separación inferior (marginBottom) ya definida arriba
+        float iy = vh - (marginBottom * 0.5f) - (b.height * 0.5f) - b.top;
+        instr.setPosition(ix, iy);
+        window.draw(instr);
+    }
+
+    // Mostrar récord guardado
+    int high = Score().getHighScore();
+    ui.drawText(window, "High Score: " + std::to_string(high), 320, 400, 20, sf::Color::Black);
 }

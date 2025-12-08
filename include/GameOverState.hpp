@@ -15,8 +15,9 @@ private:
     
     enum GameOverOption
     {
-        RETURN_MENU = 0,
-        RESTART = 1
+        RESTART = 0,
+        RETURN_MENU = 1,
+        EXIT = 2
     };
     
 public:

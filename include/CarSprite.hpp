@@ -11,6 +11,7 @@ private:
     float velocity;
     int lane;
     bool isPlayer;
+    inline static float globalScroll = 0.0f; // píxeles/segundo añadidos para simular avance del jugador
 
 public:
     CarSprite(const std::string& imagePath, float startY, int lane, float speed, bool player = false);
@@ -26,6 +27,9 @@ public:
     void setScale(float scaleX, float scaleY);
     bool isOffScreen(float windowHeight = 600.0f) const;
     sf::Sprite& getSprite();
+
+    // Control global de desplazamiento (aportado por GameState)
+    static void setGlobalScroll(float scrollPxPerSec) { globalScroll = scrollPxPerSec; }
 };
 
 #endif

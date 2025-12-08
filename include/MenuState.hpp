@@ -3,6 +3,7 @@
 
 #include "State.hpp"
 #include "UI.hpp"
+#include <SFML/Graphics.hpp>
 #include <memory>
 
 class MenuState : public State
@@ -10,6 +11,9 @@ class MenuState : public State
 private:
     UI ui;
     int selectedOption;
+    // Fondo del menú
+    sf::Texture bgTexture;
+    sf::Sprite bgSprite;
     enum MenuOption
     {
         START_GAME = 0,

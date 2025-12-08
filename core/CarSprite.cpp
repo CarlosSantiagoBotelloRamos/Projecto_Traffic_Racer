@@ -24,7 +24,12 @@ CarSprite::CarSprite(const std::string& imagePath, float startY, int lane, float
 
 void CarSprite::update(float deltaTime)
 {
-    float dy = isPlayer ? -velocity * deltaTime : velocity * deltaTime;
+    float dy = 0.0f;
+    if (isPlayer) {
+        dy = -velocity * deltaTime;
+    } else {
+        dy = (velocity + globalScroll) * deltaTime;
+    }
     sprite.move(0, dy);
 }
 

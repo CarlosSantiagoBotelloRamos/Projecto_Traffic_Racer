@@ -1,16 +1,12 @@
 #include "Player.hpp"
 #include "LaneConfig.hpp"
+#include "Config.hpp"
 #include <memory>
 #include <cmath>
 
-const int WINDOW_WIDTH = 800;
-const int WINDOW_HEIGHT = 600;
-const float LANE_WIDTH = 50.0f;
-const float PLAYER_WIDTH = 40.0f;
-const float PLAYER_HEIGHT = 60.0f;
-const float MAX_VELOCITY = 500.0f;
-const float ACCELERATION = 300.0f;
-const float DECELERATION = 150.0f;
+const float MAX_VELOCITY = 500.0f; // ya no se usa como límite duro
+const float ACCELERATION = 300.0f; // no usado en km/h
+const float DECELERATION = 150.0f; // no usado en km/h
 const float LANE_CHANGE_SPEED = 200.0f;
 
 Player::Player(const std::string& imagePath, float startX, float startY)
@@ -28,29 +24,48 @@ Player::Player(const std::string& imagePath, float startX, float startY)
     car = std::make_unique<CarSprite>(imagePath, startY, lane, velocity, true);
     float x = getLaneX(lane);
     car->setPosition(x, startY);
-    startX = x;
+    this->startX = x;
     targetX = x;
+    // Velocidad base en km/h
+    speedKmh = BASE_SPEED_KMH;
 }
 
 void Player::update(float deltaTime)
 {
-    // Aplicar deceleración
-    if (velocity > 0)
+    // Aceleración continua mientras se mantiene la tecla
+    if (accelerating)
     {
-        velocity -= deceleration * deltaTime;
-        if (velocity < 0)
-            velocity = 0;
+        speedKmh += ACCEL_RATE_KMH * deltaTime;
     }
-    // Limitar velocidad máxima
-    if (velocity > maxVelocity)
-        velocity = maxVelocity;
-    // Movimiento hacia adelante
-    car->setVelocity(-velocity); // Player moves up
-    // Movimiento por carriles inmediato (sin animación)
-    if (isLaneChanging) {
-        car->setPosition(targetX, car->getY());
-        isLaneChanging = false;
-        startX = targetX;
+    else if (speedKmh > BASE_SPEED_KMH)
+    {
+        // Volver suavemente hacia la velocidad base si no se acelera
+        speedKmh -= DECEL_RATE_KMH * deltaTime;
+        if (speedKmh < BASE_SPEED_KMH) speedKmh = BASE_SPEED_KMH;
+    }
+    // Aplicar frenado progresivo si está activo
+    if (braking)
+    {
+        speedKmh -= BRAKE_RATE_KMH * deltaTime;
+        if (speedKmh < BASE_SPEED_KMH) speedKmh = BASE_SPEED_KMH;
+    }
+    // Convertir a píxeles/segundo (solo para lógica de puntuación/colisión si se necesita)
+    velocity = speedKmh * PIXELS_PER_KMH;
+    // Mantener el jugador anclado verticalmente: el fondo simula el movimiento
+    car->setVelocity(0.0f);
+    // Transición suave entre carriles
+    if (isLaneChanging && laneAnimTime > 0.0f) {
+        laneAnimElapsed += deltaTime;
+        float t = laneAnimElapsed / laneAnimTime;
+        if (t > 1.0f) t = 1.0f;
+        // Suavizado (smoothstep)
+        float s = t * t * (3.0f - 2.0f * t);
+        float newX = startX + (targetX - startX) * s;
+        car->setPosition(newX, car->getY());
+        if (t >= 1.0f) {
+            isLaneChanging = false;
+            startX = targetX;
+        }
     }
     car->update(deltaTime);
     // Mantener dentro de pantalla verticalmente
@@ -59,37 +74,40 @@ void Player::update(float deltaTime)
         car->setPosition(car->getX(), 0);
     if (y > WINDOW_HEIGHT)
         car->setPosition(car->getX(), WINDOW_HEIGHT - 60.0f);
+    // Consumimos la bandera para el siguiente frame
+    accelerating = false;
 }
 
 void Player::accelerate()
 {
-    velocity = std::min(velocity + acceleration * 0.016f, maxVelocity);
+    accelerating = true;
 }
 
 void Player::brake()
 {
-    velocity = std::max(velocity - deceleration * 0.05f, 0.0f);
+    // Activar frenado progresivo; la reducción se aplica en update()
+    braking = true;
 }
 
 void Player::moveLeft()
 {
-    if (lane > 0) {
+    if (lane > 0 && !isLaneChanging) {
         --lane;
+        startX = car->getX();
         targetX = getLaneX(lane);
-        car->setPosition(targetX, car->getY());
-        isLaneChanging = false;
-        startX = targetX;
+        laneAnimElapsed = 0.0f;
+        isLaneChanging = true;
     }
 }
 
 void Player::moveRight()
 {
-    if (lane < NUM_LANES - 1) {
+    if (lane < NUM_LANES - 1 && !isLaneChanging) {
         ++lane;
+        startX = car->getX();
         targetX = getLaneX(lane);
-        car->setPosition(targetX, car->getY());
-        isLaneChanging = false;
-        startX = targetX;
+        laneAnimElapsed = 0.0f;
+        isLaneChanging = true;
     }
 }
 
@@ -113,6 +131,22 @@ sf::FloatRect Player::getBounds() const
 float Player::getVelocity() const
 {
     return velocity;
+}
+
+float Player::getSpeedKmh() const
+{
+    return speedKmh;
+}
+
+void Player::setAccelerating(bool on)
+{
+    accelerating = on;
+    if (on) braking = false;
+}
+
+void Player::brakeStep(float deltaTime)
+{
+    braking = true;
 }
 
 int Player::getLane() const
