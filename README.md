@@ -415,4 +415,12 @@ This project teaches:
 
 ---
 
-*Enjoy Traffic Racer! 🏎️🚗*
+*Enjoy Traffic Racer! 🏎️🚗* 
+
+
+it should look like this  ![
+    
+](image.png)
+
+
+![alt text](image-1.png)
