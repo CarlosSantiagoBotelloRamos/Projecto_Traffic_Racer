@@ -1,0 +1,12 @@
+# Build outputs
+bin/
+obj/
+
+# IDE/editor settings
+.vscode/
+
+# Local data
+highscore.dat
+
+# Misc
+*.log
