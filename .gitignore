@@ -1,6 +1,8 @@
-# Build outputs
-bin/
+# Build outputs (keep obj ignored)
 obj/
+
+# Allow publishing prebuilt binaries if needed
+!bin/
 
 # IDE/editor settings
 .vscode/
