@@ -9,7 +9,7 @@
 
 class State;
 
-class GameEngine
+class GameEnginee
 {
 private:
     sf::RenderWindow window;
