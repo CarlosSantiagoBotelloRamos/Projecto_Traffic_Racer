@@ -17,9 +17,10 @@ Player::Player(const std::string& imagePath, float startX, float startY)
       lane(1),
       health(100.0f),
       imagePath(imagePath),
-      isLaneChanging(false),
-      laneAnimElapsed(0.0f)
+            laneAnimElapsed(0.0f),
+            isLaneChanging(false)
 {
+        (void)startX; // unused parameter
     // Las posiciones de los carriles ya están definidas en el header
     car = std::make_unique<CarSprite>(imagePath, startY, lane, velocity, true);
     float x = getLaneX(lane);
@@ -144,7 +145,7 @@ void Player::setAccelerating(bool on)
     if (on) braking = false;
 }
 
-void Player::brakeStep(float deltaTime)
+void Player::brakeStep(float)
 {
     braking = true;
 }

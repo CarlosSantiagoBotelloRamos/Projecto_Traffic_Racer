@@ -2,6 +2,7 @@
 #include "GameEngine.hpp"
 #include "GameOverState.hpp"
 #include "Config.hpp"
+#include "MenuState.hpp"
 #include "CarSprite.hpp"
 #include <filesystem>
 #include "Collision.hpp"
@@ -260,6 +261,9 @@ void GameState::handleInput(const sf::Event& event)
         if (event.key.code == sf::Keyboard::Escape)
         {
             engine->popState();
+            // Asegurar retorno al menú si no hay otro estado debajo
+            auto menu = std::make_shared<MenuState>(engine);
+            engine->pushState(menu);
             return;
         }
         // Horn: reproducir al presionar tecla 1 o Numpad1

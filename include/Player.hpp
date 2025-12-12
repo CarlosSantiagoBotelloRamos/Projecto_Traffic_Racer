@@ -37,7 +37,7 @@ public:
     void update(float deltaTime);
     void accelerate();
     void brake();
-    void brakeStep(float deltaTime);
+    void brakeStep(float);
     void setAccelerating(bool on);
     void moveLeft();
     void moveRight();
