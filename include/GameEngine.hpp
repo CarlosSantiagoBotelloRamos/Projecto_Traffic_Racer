@@ -5,6 +5,7 @@
 #include <SFML/Audio.hpp>
 #include <memory>
 #include <stack>
+#include "Config.hpp"
 
 class State;
 
@@ -22,6 +23,8 @@ private:
     int selectedMap;
     // Música global de fondo
     sf::Music bgMusic;
+    // Volumen maestro de SFX (0-100)
+    float sfxVolumeMaster = VOLUME_SFX * AUDIO_VOLUME_MULTIPLIER;
     
 public:
     GameEngine();
@@ -42,6 +45,14 @@ public:
     void setSelectedMap(int map);
     int getSelectedVehicle() const;
     int getSelectedMap() const;
+    
+    // Música: acceder y ajustar volumen global
+    float getMusicVolume() const;
+    void setMusicVolume(float volume);
+    float getSfxVolume() const;
+    void setSfxVolume(float volume);
+    void playMusic();
+    void stopMusic();
     
     void quit();
 

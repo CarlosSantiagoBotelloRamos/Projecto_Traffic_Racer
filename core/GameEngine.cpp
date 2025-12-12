@@ -2,6 +2,7 @@
 #include "State.hpp"
 #include <filesystem>
 #include "Config.hpp"
+#include <iostream>
 
 GameEngine::GameEngine() 
     : window(sf::VideoMode(800, 600), "Traffic Racer"),
@@ -16,15 +17,28 @@ GameEngine::GameEngine()
 
     // Música global de fondo (menus + juego)
     try {
-        std::string musicPath = "assets/audio/music.ogg";
-        if (std::filesystem::exists(musicPath)) {
-            if (bgMusic.openFromFile(musicPath)) {
-                bgMusic.setLoop(true);
-                bgMusic.setVolume(VOLUME_MUSIC);
-                bgMusic.play();
-            }
+        const std::string relPath = "assets/audio/music.ogg";
+        const std::string absPath = "C:/Users/csbr1/OneDrive/Escritorio/EjemplosJuego/assets/audio/music.ogg";
+        std::string usePath;
+        if (std::filesystem::exists(relPath)) {
+            usePath = relPath;
+        } else if (std::filesystem::exists(absPath)) {
+            usePath = absPath;
         }
-    } catch (...) {}
+        if (!usePath.empty()) {
+            if (bgMusic.openFromFile(usePath)) {
+                bgMusic.setLoop(true);
+                bgMusic.setVolume(VOLUME_MUSIC * AUDIO_VOLUME_MULTIPLIER);
+                // No reproducir aquí: se iniciará al entrar al menú
+            } else {
+                std::cerr << "[WARNING] No se pudo abrir musica: " << usePath << "\n";
+            }
+        } else {
+            std::cerr << "[WARNING] No se encontro music.ogg en rutas esperadas.\n";
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "[WARNING] Excepcion cargando musica: " << e.what() << "\n";
+    }
 }
 
 GameEngine::~GameEngine() = default;
@@ -146,4 +160,42 @@ void GameEngine::updateLetterboxView(unsigned int winWidth, unsigned int winHeig
     }
     baseView.setViewport(viewport);
     window.setView(baseView);
+}
+
+float GameEngine::getMusicVolume() const
+{
+    return bgMusic.getVolume();
+}
+
+void GameEngine::setMusicVolume(float volume)
+{
+    if (volume < 0.f) volume = 0.f;
+    if (volume > 100.f) volume = 100.f;
+    bgMusic.setVolume(volume);
+}
+
+float GameEngine::getSfxVolume() const
+{
+    return sfxVolumeMaster;
+}
+
+void GameEngine::setSfxVolume(float volume)
+{
+    if (volume < 0.f) volume = 0.f;
+    if (volume > 100.f) volume = 100.f;
+    sfxVolumeMaster = volume;
+}
+
+void GameEngine::playMusic()
+{
+    if (bgMusic.getStatus() != sf::Music::Status::Playing) {
+        bgMusic.play();
+    }
+}
+
+void GameEngine::stopMusic()
+{
+    if (bgMusic.getStatus() == sf::Music::Status::Playing) {
+        bgMusic.stop();
+    }
 }

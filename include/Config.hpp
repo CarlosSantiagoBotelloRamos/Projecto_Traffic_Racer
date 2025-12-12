@@ -95,6 +95,14 @@ constexpr const char* NEAR_MISS_SOUND = "assets/audio/near_miss.ogg";
 constexpr float VOLUME_GLOBAL = 100.0f;         // Volumen global del listener (0-100)
 constexpr float VOLUME_SFX = 100.0f;            // Volumen por defecto de efectos
 constexpr float VOLUME_MUSIC = 100.0f;          // Volumen por defecto de música
+// Multiplicador global para ajustar volumen de todos los audios sin cambiar individuales
+// Aumenta o reduce de forma uniforme (1.0 = sin cambio)
+constexpr float AUDIO_VOLUME_MULTIPLIER = 1.0f;
+
+// Multiplicadores específicos para subir volumen de efectos puntuales
+// Acelera y freno más fuertes por solicitud
+constexpr float VOLUME_ACCEL_MULTIPLIER = 1.3f; // 30% más fuerte
+constexpr float VOLUME_FRENO_MULTIPLIER = 1.4f; // 40% más fuerte
 
 // ============================================
 // DIFICULTADES (para futuras extensiones)

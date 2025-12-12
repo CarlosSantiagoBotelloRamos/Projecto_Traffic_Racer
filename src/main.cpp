@@ -1,5 +1,6 @@
 #include "GameEngine.hpp"
 #include "MenuState.hpp"
+#include "LoadingState.hpp"
 #include <iostream>
 
 int main()
@@ -8,9 +9,9 @@ int main()
     {
         GameEngine engine;
         
-        // Crear y empujar el estado de menú inicial
-        auto menuState = std::make_shared<MenuState>(&engine);
-        engine.pushState(menuState);
+        // Mostrar pantalla de Loading por 5 segundos antes del menú
+        auto loadingState = std::make_shared<LoadingState>(&engine);
+        engine.pushState(loadingState);
         
         // Iniciar el juego
         engine.run();
