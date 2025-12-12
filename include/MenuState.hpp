@@ -19,7 +19,8 @@ private:
         START_GAME = 0,
         VEHICLE_SELECT = 1,
         MAP_SELECT = 2,
-        QUIT = 3
+        SETTINGS = 3,
+        QUIT = 4
     };
     
 public:

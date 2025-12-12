@@ -1,6 +1,7 @@
 #include "MenuState.hpp"
 #include "GameEngine.hpp"
 #include "GameState.hpp"
+#include "SettingsState.hpp"
 #include "VehicleSelectState.hpp"
 #include "MapSelectState.hpp"
 #include "Score.hpp"
@@ -11,6 +12,8 @@ MenuState::MenuState(GameEngine* engine)
         : State(engine),
             selectedOption(START_GAME)
 {
+    // Iniciar música de fondo al entrar al menú principal
+    if (engine) engine->playMusic();
     if (!ui.loadFont("assets/fonts/arial.ttf")) {
         std::cerr << "[ERROR] No se pudo cargar la fuente assets/fonts/arial.ttf.\n";
         std::cerr << "Asegúrate de que el archivo existe y es una fuente TTF válida.\n";
@@ -51,11 +54,11 @@ void MenuState::handleInput(const sf::Event& event)
     {
         if (event.key.code == sf::Keyboard::Up)
         {
-            selectedOption = (selectedOption - 1 + 4) % 4;
+            selectedOption = (selectedOption - 1 + 5) % 5;
         }
         else if (event.key.code == sf::Keyboard::Down)
         {
-            selectedOption = (selectedOption + 1) % 4;
+            selectedOption = (selectedOption + 1) % 5;
         }
         else if (event.key.code == sf::Keyboard::Return)
         {
@@ -79,6 +82,12 @@ void MenuState::handleInput(const sf::Event& event)
                 {
                     auto mapState = std::make_shared<MapSelectState>(engine);
                     engine->pushState(mapState);
+                    break;
+                }
+                case SETTINGS:
+                {
+                    auto settingsState = std::make_shared<SettingsState>(engine);
+                    engine->pushState(settingsState);
                     break;
                 }
                 case QUIT:
@@ -117,7 +126,8 @@ void MenuState::render(sf::RenderWindow& window)
         { "Start Game", START_GAME, 140.f },
         { "Select Vehicle", VEHICLE_SELECT, 195.f },
         { "Select Map", MAP_SELECT, 250.f },
-        { "Quit", QUIT, 305.f }
+        { "Settings", SETTINGS, 305.f },
+        { "Quit", QUIT, 350.f }
     };
     // Usar tamaño de la vista (coordenadas virtuales) para posicionar
     const auto viewSize = window.getView().getSize();
@@ -138,10 +148,15 @@ void MenuState::render(sf::RenderWindow& window)
         float h = baseH + (sel ? 2.f : 0.f);
         float x = 0.f;
         float y = 0.f;
-        if (it.id == QUIT) {
+        if (it.id == QUIT || it.id == SETTINGS) {
             // Quit en esquina inferior izquierda con márgenes ampliados
             x = marginSide;
-            y = vh - marginBottom - h;
+            // Si es SETTINGS, colocarlo justo encima de Quit
+            if (it.id == QUIT) {
+                y = vh - marginBottom - h;
+            } else {
+                y = vh - marginBottom - (2.f * baseH + gap);
+            }
         } else {
             // Los otros tres en esquina inferior derecha, apilados hacia arriba
             int orderIndex = 0; // 0=Start, 1=Select Vehicle, 2=Select Map

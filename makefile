@@ -19,7 +19,7 @@ CXXFLAGS := -Wall -Wextra -std=c++17 -O2
 OBJ_DIR := obj
 OBJECTS := $(addprefix $(OBJ_DIR)/, \
 	GameEngine.o Player.o EnemyCar.o Collision.o UI.o Spawner.o Score.o \
-	MenuState.o GameState.o GameOverState.o VehicleSelectState.o MapSelectState.o \
+	MenuState.o GameState.o GameOverState.o VehicleSelectState.o MapSelectState.o SettingsState.o LoadingState.o \
 	main.o CarSprite.o)
 
 # Ejecutable principal

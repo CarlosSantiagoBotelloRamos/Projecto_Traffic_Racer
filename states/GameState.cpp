@@ -57,7 +57,11 @@ GameState::GameState(GameEngine* engine, int selectedVehicle, int selectedMap)
         if (accelBuffer.loadFromFile(accelPath)) {
             accelSound.setBuffer(accelBuffer);
             accelSound.setLoop(true);
-            accelSound.setVolume(VOLUME_SFX);
+            {
+                float vol = engine->getSfxVolume() * VOLUME_ACCEL_MULTIPLIER;
+                if (vol > 100.f) vol = 100.f;
+                accelSound.setVolume(vol);
+            }
             std::cout << "[INFO] Audio de aceleracion cargado: " << accelPath << "\n";
         } else {
             std::cerr << "[WARNING] No se pudo cargar audio: " << accelPath << "\n";
@@ -81,7 +85,7 @@ GameState::GameState(GameEngine* engine, int selectedVehicle, int selectedMap)
         if (idleBuffer.loadFromFile(idlePath)) {
             idleSound.setBuffer(idleBuffer);
             idleSound.setLoop(true);
-            idleSound.setVolume(VOLUME_SFX);
+            idleSound.setVolume(engine->getSfxVolume());
             std::cout << "[INFO] Audio de andar cargado: " << idlePath << "\n";
         } else {
             std::cerr << "[WARNING] No se pudo cargar audio: " << idlePath << "\n";
@@ -119,7 +123,7 @@ GameState::GameState(GameEngine* engine, int selectedVehicle, int selectedMap)
         if (downshiftBuffer.loadFromFile(downshiftPath)) {
             downshiftSound.setBuffer(downshiftBuffer);
             downshiftSound.setLoop(false);
-            downshiftSound.setVolume(VOLUME_SFX);
+            downshiftSound.setVolume(engine->getSfxVolume());
             std::cout << "[INFO] Audio Downshift cargado: " << downshiftPath << " (samples=" << downshiftBuffer.getSampleCount() << ")\n";
         } else {
             std::cerr << "[WARNING] No se pudo cargar audio: " << downshiftPath << "\n";
@@ -156,7 +160,11 @@ GameState::GameState(GameEngine* engine, int selectedVehicle, int selectedMap)
         if (frenoBuffer.loadFromFile(frenoPath)) {
             frenoSound.setBuffer(frenoBuffer);
             frenoSound.setLoop(false);
-            frenoSound.setVolume(VOLUME_SFX);
+            {
+                float vol = engine->getSfxVolume() * VOLUME_FRENO_MULTIPLIER;
+                if (vol > 100.f) vol = 100.f;
+                frenoSound.setVolume(vol);
+            }
             std::cout << "[INFO] Audio Freno cargado: " << frenoPath << " (samples=" << frenoBuffer.getSampleCount() << ")\n";
         } else {
             std::cerr << "[WARNING] No se pudo cargar audio: " << frenoPath << "\n";
@@ -193,7 +201,7 @@ GameState::GameState(GameEngine* engine, int selectedVehicle, int selectedMap)
         if (hornBuffer.loadFromFile(hornPath)) {
             hornSound.setBuffer(hornBuffer);
             hornSound.setLoop(false);
-            hornSound.setVolume(VOLUME_SFX);
+            hornSound.setVolume(engine->getSfxVolume());
             std::cout << "[INFO] Audio Horn cargado: " << hornPath << " (samples=" << hornBuffer.getSampleCount() << ")\n";
         } else {
             std::cerr << "[WARNING] No se pudo cargar audio: " << hornPath << "\n";
@@ -306,6 +314,9 @@ void GameState::update(float deltaTime)
             if (idleSound.getStatus() == sf::Sound::Status::Playing) idleSound.stop();
             // Reproducir freno solo si supera umbral
             if (kmh >= DOWNSHIFT_MIN_KMH && frenoBuffer.getSampleCount() > 0) {
+                float vol = engine->getSfxVolume() * VOLUME_FRENO_MULTIPLIER;
+                if (vol > 100.f) vol = 100.f;
+                frenoSound.setVolume(vol);
                 frenoSound.play();
                 std::cout << "[INFO] Freno triggered (>=" << DOWNSHIFT_MIN_KMH << " km/h)\n";
             }
@@ -315,6 +326,9 @@ void GameState::update(float deltaTime)
         if (!frenoPlaying) {
             if (idleSound.getStatus() == sf::Sound::Status::Playing) idleSound.stop();
             if (accelBuffer.getSampleCount() > 0 && accelSound.getStatus() != sf::Sound::Status::Playing) {
+                float vol = engine->getSfxVolume() * VOLUME_ACCEL_MULTIPLIER;
+                if (vol > 100.f) vol = 100.f;
+                accelSound.setVolume(vol);
                 accelSound.play();
             }
         }
@@ -435,5 +449,6 @@ void GameState::checkNearMisses()
         }
     }
 }
+
 
 

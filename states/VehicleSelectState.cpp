@@ -52,7 +52,7 @@ VehicleSelectState::VehicleSelectState(GameEngine* engine)
                 if (revBuffer.loadFromFile(entry.path().string())) {
                     revSound.setBuffer(revBuffer);
                     revSound.setLoop(false);
-                    revSound.setVolume(VOLUME_SFX);
+                    revSound.setVolume(VOLUME_SFX * AUDIO_VOLUME_MULTIPLIER);
                 }
                 break;
             }
