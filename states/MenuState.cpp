@@ -37,9 +37,9 @@ MenuState::MenuState(GameEngine* engine)
     if (!bgPath.empty() && bgTexture.loadFromFile(bgPath)) {
         bgTexture.setSmooth(true);
         bgSprite.setTexture(bgTexture);
-        auto win = engine->getWindow().getSize();
-        float scaleX = static_cast<float>(win.x) / bgTexture.getSize().x;
-        float scaleY = static_cast<float>(win.y) / bgTexture.getSize().y;
+        auto view = engine->getWindow().getView().getSize();
+        float scaleX = view.x / static_cast<float>(bgTexture.getSize().x);
+        float scaleY = view.y / static_cast<float>(bgTexture.getSize().y);
         bgSprite.setScale(scaleX, scaleY);
         bgSprite.setPosition(0.f, 0.f);
         std::cout << "[INFO] Fondo de menú cargado: " << bgPath << "\n";
@@ -109,10 +109,10 @@ void MenuState::render(sf::RenderWindow& window)
     window.clear(sf::Color::Black);
     // Dibujar fondo si está cargado
     if (bgTexture.getSize().x > 0 && bgTexture.getSize().y > 0) {
-        // Reajustar escala si la ventana cambió de tamaño
-        auto win = window.getSize();
-        float scaleX = static_cast<float>(win.x) / bgTexture.getSize().x;
-        float scaleY = static_cast<float>(win.y) / bgTexture.getSize().y;
+        // Reajustar escala a la vista (soporta fullscreen zoom)
+        auto view = window.getView().getSize();
+        float scaleX = view.x / static_cast<float>(bgTexture.getSize().x);
+        float scaleY = view.y / static_cast<float>(bgTexture.getSize().y);
         bgSprite.setScale(scaleX, scaleY);
         window.draw(bgSprite);
     }

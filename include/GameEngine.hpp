@@ -9,7 +9,7 @@
 
 class State;
 
-class GameEnginee
+class GameEngine
 {
 private:
     sf::RenderWindow window;
@@ -17,6 +17,7 @@ private:
     std::stack<std::shared_ptr<State>> states;
     sf::Clock clock;
     bool running;
+    bool isFullscreen = false;
     
     // Selecciones del jugador
     int selectedVehicle;
@@ -55,6 +56,9 @@ public:
     void stopMusic();
     
     void quit();
+
+    // Pantalla completa: alternar manteniendo la vista 800x600 con letterbox
+    void toggleFullscreen();
 
 private:
     void updateLetterboxView(unsigned int winWidth, unsigned int winHeight);

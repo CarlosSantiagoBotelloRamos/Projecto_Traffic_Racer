@@ -241,15 +241,15 @@ GameState::GameState(GameEngine* engine, int selectedVehicle, int selectedMap)
     }
     roadSprite1.setTexture(roadTexture);
     roadSprite2.setTexture(roadTexture);
-    // Escalar el fondo para cubrir toda la ventana dinámicamente
-    auto winSize = engine->getWindow().getSize();
-    float scaleX = static_cast<float>(winSize.x) / roadTexture.getSize().x;
-    float scaleY = static_cast<float>(winSize.y) / roadTexture.getSize().y;
+    // Escalar el fondo para cubrir toda el área de vista (soporta fullscreen zoom)
+    auto viewSize = engine->getWindow().getView().getSize();
+    float scaleX = viewSize.x / static_cast<float>(roadTexture.getSize().x);
+    float scaleY = viewSize.y / static_cast<float>(roadTexture.getSize().y);
     roadSprite1.setScale(scaleX, scaleY);
     roadSprite2.setScale(scaleX, scaleY);
-    // Posicionar en 0,0
-    roadSprite1.setPosition(0, 0);
-    roadSprite2.setPosition(0, -static_cast<float>(winSize.y)); // Usar alto de ventana
+    // Posicionar para scroll continuo sin huecos
+    roadSprite1.setPosition(0.f, 0.f);
+    roadSprite2.setPosition(0.f, -viewSize.y);
     roadScrollY = 0.0f;
     roadScrollSpeed = 200.0f; // Puedes ajustar la velocidad
 }
@@ -291,7 +291,7 @@ void GameState::handleInput(const sf::Event& event)
 void GameState::update(float deltaTime)
 {
     // Fondo animado: scroll infinito
-    float bgHeight = static_cast<float>(engine->getWindow().getSize().y); // Alto de ventana
+    float bgHeight = engine->getWindow().getView().getSize().y; // Alto de vista
     roadScrollY += roadScrollSpeed * deltaTime;
     if (roadScrollY >= bgHeight)
         roadScrollY -= bgHeight;
@@ -393,15 +393,12 @@ void GameState::render(sf::RenderWindow& window)
     window.draw(roadSprite2);
     window.draw(roadSprite1);
 
-    // Si el fondo no cubre toda la ventana, dibuja más sprites
+    // Garantizar cobertura total con una tercera copia si fuera necesario
     if (roadScrollY < 0) {
         sf::Sprite extraSprite(roadTexture);
-        auto winSize = engine->getWindow().getSize();
-        float scaleX = static_cast<float>(winSize.x) / roadTexture.getSize().x;
-        float scaleY = static_cast<float>(winSize.y) / roadTexture.getSize().y;
-        float bgHeight = static_cast<float>(winSize.y);
-        extraSprite.setScale(scaleX, scaleY);
-        extraSprite.setPosition(0, roadScrollY + bgHeight);
+        extraSprite.setScale(roadSprite1.getScale());
+        float bgHeight = engine->getWindow().getView().getSize().y;
+        extraSprite.setPosition(0.f, roadScrollY + bgHeight);
         window.draw(extraSprite);
     }
 

@@ -66,6 +66,16 @@ void GameEngine::handleInput()
         if (event.type == sf::Event::Resized) {
             updateLetterboxView(event.size.width, event.size.height);
         }
+
+        // Toggle fullscreen with F11 or Alt+Enter
+        if (event.type == sf::Event::KeyPressed) {
+            if (event.key.code == sf::Keyboard::F11 ||
+                (event.key.code == sf::Keyboard::Enter && (event.key.alt))) {
+                toggleFullscreen();
+                // After recreating window, continue processing
+                continue;
+            }
+        }
         
         if (!states.empty())
             states.top()->handleInput(event);
@@ -134,32 +144,70 @@ void GameEngine::quit()
     running = false;
 }
 
-// Mantener aspecto 800x600 con letterboxing
+// Aspecto 800x600: letterbox en ventana; "cover zoom" en fullscreen
 void GameEngine::updateLetterboxView(unsigned int winWidth, unsigned int winHeight)
 {
     const float targetW = 800.f;
     const float targetH = 600.f;
-    float windowRatio = static_cast<float>(winWidth) / static_cast<float>(winHeight);
-    float targetRatio = targetW / targetH;
+    const float windowRatio = static_cast<float>(winWidth) / static_cast<float>(winHeight);
+    const float targetRatio = targetW / targetH;
 
+    if (isFullscreen) {
+        // Cover zoom: llenar pantalla sin barras, manteniendo proporción (recorta área visible)
+        // Ajustar tamaño de la vista al aspect ratio de la ventana
+        if (windowRatio > targetRatio) {
+            // Ventana más ancha: conservar ancho 800 y reducir alto para igualar ratio
+            float newH = targetW / windowRatio; // e.g., 800 / 1.777... = 450
+            baseView.setSize(targetW, newH);
+        } else if (windowRatio < targetRatio) {
+            // Ventana más alta: conservar alto 600 y reducir ancho para igualar ratio
+            float newW = targetH * windowRatio; // e.g., 600 * 1.25 = 750
+            baseView.setSize(newW, targetH);
+        } else {
+            baseView.setSize(targetW, targetH);
+        }
+        baseView.setCenter(targetW * 0.5f, targetH * 0.5f);
+        baseView.setViewport(sf::FloatRect(0.f, 0.f, 1.f, 1.f));
+        window.setView(baseView);
+        return;
+    }
+
+    // Letterbox para modo ventana (sin distorsión, con barras)
     sf::FloatRect viewport(0.f, 0.f, 1.f, 1.f);
     if (windowRatio > targetRatio) {
-        // Ventana más ancha: barras verticales
         float widthRatio = targetRatio / windowRatio;
         viewport.width = widthRatio;
         viewport.left = (1.f - widthRatio) * 0.5f;
-        viewport.top = 0.f;
-        viewport.height = 1.f;
     } else if (windowRatio < targetRatio) {
-        // Ventana más alta: barras horizontales
         float heightRatio = windowRatio / targetRatio;
         viewport.height = heightRatio;
         viewport.top = (1.f - heightRatio) * 0.5f;
-        viewport.left = 0.f;
-        viewport.width = 1.f;
     }
+    baseView.setSize(targetW, targetH);
+    baseView.setCenter(targetW * 0.5f, targetH * 0.5f);
     baseView.setViewport(viewport);
     window.setView(baseView);
+}
+
+void GameEngine::toggleFullscreen()
+{
+    // Preserve current window size for windowed mode
+    sf::Vector2u currentSize = window.getSize();
+    // Get current style toggle
+    isFullscreen = !isFullscreen;
+    // Need to recreate the window with new style
+    window.close();
+    if (isFullscreen) {
+        auto mode = sf::VideoMode::getDesktopMode();
+        window.create(mode, "Traffic Racer", sf::Style::Fullscreen);
+    } else {
+        window.create(sf::VideoMode(800, 600), "Traffic Racer", sf::Style::Titlebar | sf::Style::Close);
+        window.setSize(currentSize); // keep last size if user resized
+    }
+    window.setFramerateLimit(60);
+    // Reset the base view to 800x600 and apply letterbox
+    baseView = sf::View(sf::FloatRect(0.f, 0.f, 800.f, 600.f));
+    updateLetterboxView(window.getSize().x, window.getSize().y);
 }
 
 float GameEngine::getMusicVolume() const
